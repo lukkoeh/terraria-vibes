@@ -1,0 +1,28 @@
+:root {
+  --bg: #0e0f13;
+  --panel: #1b1e27;
+  --text: #e6e8ef;
+  --muted: #a3a7b7;
+  --accent: #4dd4b7;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  overflow: hidden;
+}
+
+.overlay { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+.hud-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+.hud { pointer-events: none; color: var(--muted); font-size: 12px; text-shadow: 0 1px 1px rgba(0,0,0,0.5); }
+.hotbar { pointer-events: auto; align-self: center; display: grid; grid-auto-flow: column; grid-auto-columns: 44px; gap: 6px; padding: 10px 12px; background: rgba(15,16,20,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; backdrop-filter: blur(6px); }
+.hotbar .slot { cursor: pointer; }
+.slot { width: 44px; height: 44px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: var(--panel); position: relative; box-shadow: inset 0 1px 1px rgba(255,255,255,0.04); }
+.slot.selected { outline: 2px solid var(--accent); box-shadow: 0 0 0 2px rgba(77,212,183,0.25); }
+.slot .label { position: absolute; top: 4px; left: 6px; font-size: 10px; color: var(--muted); }
+.slot .count { position: absolute; bottom: 4px; right: 6px; font-size: 11px; color: var(--text); }
+.pill { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 4px 8px; }
