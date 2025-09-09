@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js'
 import { Tile } from '../state/store'
 import { TILE_SIZE } from '../world/types'
+import { loadTerrainTextures } from './assets'
 
 export class TileTextures {
   app: PIXI.Application
@@ -8,15 +9,34 @@ export class TileTextures {
   constructor(app: PIXI.Application) {
     this.app = app
     this.map.set(Tile.Empty, PIXI.Texture.EMPTY)
+    // Populate with procedural fallbacks immediately for first render
     this.map.set(Tile.Background, this.makeBackground())
     this.map.set(Tile.Dirt, this.makeDirt())
     this.map.set(Tile.Stone, this.makeStone())
     this.map.set(Tile.Wood, this.makeWoodPlank())
-    this.map.set(Tile.Trunk, this.makeBark())
-    this.map.set(Tile.Leaves, this.makeLeaves())
-    this.map.set(Tile.Grass, this.makeGrass())
+    if ((Tile as any).Trunk !== undefined) this.map.set((Tile as any).Trunk, this.makeBark())
+    if ((Tile as any).Leaves !== undefined) this.map.set((Tile as any).Leaves, this.makeLeaves())
+    if ((Tile as any).Grass !== undefined) this.map.set((Tile as any).Grass, this.makeGrass())
+    // Then try external terrain textures; they will override if found
+    this.init()
   }
   get(t: Tile) { return this.map.get(t) || PIXI.Texture.EMPTY }
+
+  private async init() {
+    const ext = await loadTerrainTextures()
+    if (ext) {
+      // External keys expected (best-effort):
+      // background, dirt, stone, wood, trunk, leaves, grass
+      if (ext['background']) this.map.set(Tile.Background, ext['background'])
+      if (ext['dirt']) this.map.set(Tile.Dirt, ext['dirt'])
+      if (ext['stone']) this.map.set(Tile.Stone, ext['stone'])
+      if (ext['wood']) this.map.set(Tile.Wood, ext['wood'])
+      if ((Tile as any).Trunk !== undefined && ext['trunk']) this.map.set((Tile as any).Trunk, ext['trunk'])
+      if ((Tile as any).Leaves !== undefined && ext['leaves']) this.map.set((Tile as any).Leaves, ext['leaves'])
+      if ((Tile as any).Grass !== undefined && ext['grass']) this.map.set((Tile as any).Grass, ext['grass'])
+    }
+    // At this point, map already has fallbacks; external ones overwrite if present
+  }
 
   private rtFrom(g: PIXI.Graphics) {
     const rt = PIXI.RenderTexture.create({ width: TILE_SIZE, height: TILE_SIZE, resolution: 1 })

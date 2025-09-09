@@ -244,7 +244,7 @@ export class Game {
       useRuntime.getState().setZoom(clamped)
     })
     }
-    this.renderer.drawPlayer(this.player.x, this.player.y, this.player.width, this.player.height)
+    this.renderer.drawPlayer(this.player.x, this.player.y, this.player.width, this.player.height, { vx: this.player.vx, vy: this.player.vy }, this.player.onGround)
     this.renderer.render(this.player)
   }
 }

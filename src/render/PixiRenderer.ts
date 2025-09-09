@@ -4,6 +4,7 @@ import { World } from '../world/world'
 import { ChunkRenderer } from './ChunkRenderer'
 import { TileTextures } from './textures'
 import { SkyBackground } from './Sky'
+import { PlayerSprite } from './PlayerSprite'
 
 export class PixiRenderer {
   app: PIXI.Application
@@ -14,7 +15,7 @@ export class PixiRenderer {
   sky: SkyBackground
   worldContainer = new PIXI.Container()
   playerContainer = new PIXI.Container()
-  playerGfx = new PIXI.Graphics()
+  playerSprite: PlayerSprite
   miningGfx = new PIXI.Graphics()
 
   constructor(canvas: HTMLCanvasElement, world: World) {
@@ -41,7 +42,8 @@ export class PixiRenderer {
     this.worldContainer.addChild(this.chunkRenderer.layerFg)
 
     this.stage.addChild(this.playerContainer)
-    this.playerContainer.addChild(this.playerGfx)
+    this.playerSprite = new PlayerSprite(this.app)
+    this.playerContainer.addChild(this.playerSprite.container)
     this.playerContainer.addChild(this.miningGfx)
 
     // Stop Pixi's internal ticker; manual render
@@ -67,11 +69,23 @@ export class PixiRenderer {
     this.camera.y = y
   }
 
-  drawPlayer(px: number, py: number, w: number, h: number) {
-    this.playerGfx.clear()
-    this.playerGfx.beginFill(0x4dd4b7).drawRect(0,0,w,h).endFill()
-    this.playerGfx.x = Math.floor(px)
-    this.playerGfx.y = Math.floor(py)
+  drawPlayer(px: number, py: number, w: number, h: number, vel: {vx:number, vy:number}, onGround: boolean) {
+    // Choose anim state based on velocity
+    const speed = Math.abs(vel.vx)
+    const moving = speed > 0.1
+    const rising = vel.vy < -0.2
+    const falling = vel.vy > 0.5 && !onGround
+
+    if (rising) this.playerSprite.setState('jump')
+    else if (falling) this.playerSprite.setState('fall')
+    else if (moving) this.playerSprite.setState('run')
+    else this.playerSprite.setState('idle')
+
+    // size & facing
+    this.playerSprite.setSize(w, h)
+    if (vel.vx !== 0) this.playerSprite.setFacing((vel.vx >= 0 ? 1 : -1) as 1 | -1)
+
+    this.playerSprite.setPosition(px, py)
   }
 
   drawMiningIndicator(tileX: number, tileY: number, progress: number | null) {
@@ -93,7 +107,7 @@ export class PixiRenderer {
     }
   }
 
-  render(player: {x:number,y:number,width:number,height:number}) {
+  render(player: {x:number,y:number,width:number,height:number,vx?:number,vy?:number,onGround?:boolean}) {
     const viewW = this.app.renderer.width
     const viewH = this.app.renderer.height
     const scale = this.camera.scale
