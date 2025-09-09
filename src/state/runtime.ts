@@ -17,6 +17,15 @@ interface RuntimeState {
   setDebugText: (t: string) => void
   tool: Tool
   setTool: (t: Tool) => void
+  // UI state
+  paused: boolean
+  setPaused: (v: boolean) => void
+  menuOpen: boolean
+  setMenuOpen: (v: boolean) => void
+  inventoryOpen: boolean
+  setInventoryOpen: (v: boolean) => void
+  zoom: number
+  setZoom: (z: number) => void
 }
 
 export const useRuntime = create<RuntimeState>()((set, get) => ({
@@ -26,4 +35,12 @@ export const useRuntime = create<RuntimeState>()((set, get) => ({
   setDebugText: (t) => set({ debugText: t }),
   tool: 'none',
   setTool: (t) => set({ tool: t }),
+  paused: false,
+  setPaused: (v) => set({ paused: v }),
+  menuOpen: false,
+  setMenuOpen: (v) => set({ menuOpen: v }),
+  inventoryOpen: false,
+  setInventoryOpen: (v) => set({ inventoryOpen: v }),
+  zoom: 2,
+  setZoom: (z) => set({ zoom: Math.max(1, Math.min(4, z)) }),
 }))

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useStore, Tile, ItemType } from '../state/store'
 import { AxeIcon, ShovelIcon, PickaxeIcon } from './icons'
 import { TileSwatch } from './TileSwatch'
@@ -17,16 +17,35 @@ export const Hotbar: React.FC = () => {
   const selected = useStore(s => s.selectedSlot)
   const setSelected = useStore(s => s.setSelectedSlot)
   const slots = useStore(s => s.slots)
+  const moveSlot = useStore(s => s.moveSlot)
+  const [dragOver, setDragOver] = useState<number | null>(null)
 
   return (
     <div className="hotbar">
-      {slots.map((s, i) => (
+      {slots.slice(0,10).map((s, i) => (
         <div
           key={i}
           className={'slot ' + (i === selected ? 'selected' : '')}
           onClick={() => setSelected(i)}
           title={itemLabel(s.item)}
-          style={{ display:'flex', alignItems:'center', justifyContent:'center' }}
+          style={{ display:'flex', alignItems:'center', justifyContent:'center', outline: dragOver===i ? '2px dashed rgba(255,255,255,0.25)' : undefined }}
+          draggable={!!s.item}
+          onDragStart={(e) => {
+            if (!s.item) { e.preventDefault(); return }
+            e.dataTransfer.setData('text/plain', String(i))
+            e.dataTransfer.effectAllowed = 'move'
+          }}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(i); e.dataTransfer.dropEffect = 'move' }}
+          onDragLeave={() => setDragOver(prev => prev===i ? null : prev)}
+          onDrop={(e) => {
+            e.preventDefault()
+            const from = parseInt(e.dataTransfer.getData('text/plain'), 10)
+            if (!Number.isNaN(from)) {
+              moveSlot(from, i)
+              setSelected(i)
+            }
+            setDragOver(null)
+          }}
         >
           <div className="label">{i+1}</div>
           {s.item===Tile.Dirt && <TileSwatch tile={Tile.Dirt} size={28} />}

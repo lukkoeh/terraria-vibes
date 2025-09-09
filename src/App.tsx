@@ -2,10 +2,13 @@ import React, { useEffect, useRef } from 'react'
 import { Game } from './engine/Game'
 import { Hotbar } from './ui/Hotbar'
 import { HUD } from './ui/HUD'
-import { WorldMenu } from './ui/WorldMenu'
+import { SettingsOverlay } from './ui/SettingsOverlay'
+import { useRuntime } from './state/runtime'
 
 export const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const menuOpen = useRuntime(s => s.menuOpen)
+  const inventoryOpen = useRuntime(s => s.inventoryOpen)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -29,10 +32,12 @@ export const App: React.FC = () => {
       <div className="overlay">
         <div className="hud-row" style={{ justifyContent:'space-between' }}>
           <HUD />
-          <WorldMenu />
         </div>
-        <div className="hud-row" style={{justifyContent:'center', marginBottom: 12}}><Hotbar /></div>
+        {!(menuOpen || inventoryOpen) && (
+          <div className="hud-row" style={{justifyContent:'center', marginBottom: 12}}><Hotbar /></div>
+        )}
       </div>
+      <SettingsOverlay />
     </>
   )
 }

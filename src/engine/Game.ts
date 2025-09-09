@@ -22,6 +22,7 @@ export class Game {
   mining: { tx: number, ty: number, tile: Tile, elapsed: number, required: number } | null = null
   leafDecay = new LeafDecaySystem()
   saveManager: SaveManager
+  paused = false
 
   constructor(public canvas: HTMLCanvasElement) {
     this.renderer = new PixiRenderer(canvas, this.world)
@@ -101,6 +102,11 @@ export class Game {
   }
 
   update(dt: number) {
+    if (this.paused) {
+      // minimal housekeeping; no world updates while paused
+      this.input.postUpdate()
+      return
+    }
     this.controller.update(dt)
     this.handleInteractions(dt)
     this.leafDecay.update(dt, this.world)
@@ -224,6 +230,19 @@ export class Game {
       this.renderer.drawMiningIndicator(this.mining.tx, this.mining.ty, prog)
     } else {
       this.renderer.drawMiningIndicator(0,0,null)
+    // UI events
+    window.addEventListener('set-pause', (e: any) => {
+      const v = !!e.detail?.paused
+      this.paused = v
+      useRuntime.getState().setPaused(v)
+    })
+    window.addEventListener('set-zoom', (e: any) => {
+      const z = Number(e.detail?.zoom)
+      if (!Number.isFinite(z)) return
+      const clamped = Math.max(1, Math.min(4, z))
+      this.renderer.camera.scale = clamped
+      useRuntime.getState().setZoom(clamped)
+    })
     }
     this.renderer.drawPlayer(this.player.x, this.player.y, this.player.width, this.player.height)
     this.renderer.render(this.player)

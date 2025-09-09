@@ -11,6 +11,7 @@ Technologie-Stack: **React + TypeScript + Vite + Pixi.js (WebGL)**, State mit **
 - **Spieler**: Rechteck-Avatar, L/R laufen, springen, Gravitation, Kollision
 - **Interaktionen**: LMB abbauen, RMB setzen (Reichweite ~5 Tiles)
 - **Inventar**: Hotbar 10 Slots (1–0, Mausrad)
+- **Inventar**: 9×9 Inventory + Hotbar (10 Slots)
 - **Rendering**: Pixi.js, Chunk‑Layer (BG/FG) als RenderTextures; nur sichtbare Chunks redraw; Sky‑Gradient, prozedurale Tile‑Texturen (Erde/Stein/Borke/Laub/Gras)
 - **Loop**: Fester Timestep (60 FPS)
 
@@ -20,8 +21,26 @@ npm install
 npm run dev
 ```
 
+## Desktop (Electron)
+
+- Entwicklung (Electron + Vite Dev Server):
+```bash
+npm start
+```
+
+- Produktion bauen und paketieren (Electron Builder):
+```bash
+npm run build:app
+```
+Das erzeugt eine lauffähige Desktop‑App (plattformabhängiges Artefakt) und lädt die gebaute Vite‑App aus `dist/`.
+
+- Direkt testen (ohne Installation, aus `dist/` laden):
+```bash
+npm run preview:app
+```
+
 ## Steuerung
-A/D bzw. ←/→ laufen • W/↑/Space springen • LMB abbauen • RMB setzen • 1–0 Slots • Mausrad wechseln
+A/D bzw. ←/→ laufen • W/↑/Space springen • LMB abbauen • RMB setzen • 1–0 Slots • Mausrad wechseln • Esc Pause/Settings • I Inventar
 
 ## Architektur
 - **World (infinite)**: `Map<"cx,cy", Chunk>` statt statischem Array. `get()`/`set()` erzeugen Chunks on‑demand. Seed‑basierte Noise (Terrain & Forest).

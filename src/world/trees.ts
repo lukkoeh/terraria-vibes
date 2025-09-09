@@ -18,6 +18,9 @@ export interface TreeParams {
   canopyRadiusMin: number
   canopyRadiusMax: number
   leafDensity: number // 0..1 (packing probability inside canopy shape)
+  // ensure some bare trunk above ground (no leaves)
+  bareMin: number
+  bareMax: number
 }
 
 function randRange(rng: Rng, a: number, b: number) {
@@ -41,7 +44,7 @@ export function speciesParams(species: TreeSpecies, rng: Rng): TreeParams {
     case 'pine':
       return {
         trunkMin: 8,
-        trunkMax: 14,
+        trunkMax: 16,
         trunkLeanMax: 1.0,
         trunkWidth: 1,
         branchCountMin: 3,
@@ -51,11 +54,13 @@ export function speciesParams(species: TreeSpecies, rng: Rng): TreeParams {
         canopyRadiusMin: 2,
         canopyRadiusMax: 3,
         leafDensity: 0.85,
+        bareMin: 3,
+        bareMax: 6,
       }
     case 'birch':
       return {
         trunkMin: 6,
-        trunkMax: 10,
+        trunkMax: 12,
         trunkLeanMax: 1.5,
         trunkWidth: 1,
         branchCountMin: 2,
@@ -65,12 +70,14 @@ export function speciesParams(species: TreeSpecies, rng: Rng): TreeParams {
         canopyRadiusMin: 2,
         canopyRadiusMax: 3,
         leafDensity: 0.75,
+        bareMin: 2,
+        bareMax: 5,
       }
     case 'oak':
     default:
       return {
         trunkMin: 7,
-        trunkMax: 12,
+        trunkMax: 14,
         trunkLeanMax: 2.0,
         trunkWidth: rng() < 0.2 ? 2 : 1,
         branchCountMin: 3,
@@ -80,6 +87,8 @@ export function speciesParams(species: TreeSpecies, rng: Rng): TreeParams {
         canopyRadiusMin: 3,
         canopyRadiusMax: 5,
         leafDensity: 0.9,
+        bareMin: 3,
+        bareMax: 6,
       }
   }
 }
@@ -110,6 +119,10 @@ export function placeNaturalTree(world: World, gx: number, surfaceY: number, rng
   const trunkWidth = params.trunkWidth
   const lean = (rng() * 2 - 1) * params.trunkLeanMax // total horizontal offset across height
 
+  // Decide how much of the trunk above ground stays free of leaves
+  let bareTrunk = irandRange(rng, params.bareMin, params.bareMax)
+  bareTrunk = Math.max(2, Math.min(bareTrunk, Math.max(2, height - 2)))
+
   // Draw trunk bottom-up with slight meander
   for (let i = 0; i < height; i++) {
     const t = i / Math.max(1, height - 1)
@@ -125,8 +138,10 @@ export function placeNaturalTree(world: World, gx: number, surfaceY: number, rng
 
   // Branches
   const branchCount = irandRange(rng, params.branchCountMin, params.branchCountMax)
+  const minBranchRel = Math.max(0.35, bareTrunk / Math.max(1, height) + 0.05)
   for (let b = 0; b < branchCount; b++) {
     const rel = 0.35 + 0.55 * (b / Math.max(1, branchCount - 1)) // spread along upper trunk
+    if (rel < minBranchRel) continue
     const by = surfaceY - Math.floor(height * rel)
     const dir = rng() < 0.5 ? -1 : 1
     const len = irandRange(rng, params.branchLengthMin, params.branchLengthMax)
@@ -143,6 +158,7 @@ export function placeNaturalTree(world: World, gx: number, surfaceY: number, rng
   const rx = radius + (species === 'pine' ? -0.2 : 0.4)
   const ry = species === 'pine' ? radius * 1.3 : radius * (species === 'birch' ? 0.9 : 1.0)
   const cx = gx + Math.round(lean)
+  const leafMinY = surfaceY - bareTrunk // do not place leaves below this line
   for (let dy = -Math.ceil(ry) - 1; dy <= Math.ceil(ry) + 1; dy++) {
     for (let dx = -Math.ceil(rx) - 1; dx <= Math.ceil(rx) + 1; dx++) {
       const nx = dx / (rx + 0.0001)
@@ -151,8 +167,9 @@ export function placeNaturalTree(world: World, gx: number, surfaceY: number, rng
       const inside = (nx * nx + ny * ny) <= (0.95 + rng() * 0.12)
       if (!inside) continue
       if (rng() > params.leafDensity) continue
-      setTileSafe(world, cx + dx, topY + dy, Tile.Leaves)
+      const yy = topY + dy
+      if (yy > leafMinY) continue // keep bare trunk zone leaf-free
+      setTileSafe(world, cx + dx, yy, Tile.Leaves)
     }
   }
 }
-
